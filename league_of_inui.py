@@ -8,9 +8,8 @@ from requests_oauthlib import OAuth1Session
 import sys
 import collections
 import config_of_inui
+import enum
 
-#仮
-lol_version = "9.6.1"
 API_KEY = config_of_inui.API_KEY
 ACCOUNT_NAME = config_of_inui.ACCOUNT_NAME
 SERVER_ID = config_of_inui.SERVER_ID
@@ -19,17 +18,22 @@ MATCH_LIST_URL ="https://jp1.api.riotgames.com/lol/match/v4/matchlists/by-accoun
 ACCOUNT_ID_URL = "https://jp1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + ACCOUNT_NAME
 GAME_INFO_URL = "https://jp1.api.riotgames.com/lol/match/v4/matches/"
 LATEST_VERSION_URL = "https://ddragon.leagueoflegends.com/api/versions.json"
+
+lol_version = json.loads(OAuth1Session(API_KEY).get(LATEST_VERSION_URL).text)[0]
+
 CHAMPION_DATA_URL = "http://ddragon.leagueoflegends.com/cdn/" + lol_version + "/data/ja_JP/champion.json"
 ITEM_DATA_URL = "http://ddragon.leagueoflegends.com/cdn/" + lol_version + "/data/ja_JP/item.json"
 
-NORMAL_QUEUE = 430
-SOLO_QUEUE = 420
+class Queue(enum.IntEnum):	
+	SOLO = 420
+	NORMAL = 430
+	TEAM = 440
 
 #リストの先頭が最新バージョン
 def get_latest_version(riot_api):
 	req = riot_api.get(LATEST_VERSION_URL)
 	return json.loads(req.text)[0]
-	
+#未使用
 def get_champion_data_json():
 	req = riot_api.get(CHAMPION_DATA_URL)
 	return json.loads(req.text)
@@ -46,16 +50,17 @@ def get_encrypted_account_id():
 		
 	else:
 		print("ERROR:" + str(req.status_code))
+		print(req.headers)
 		sys.exit()
 		
 	
 def get_matches_list(account_id):
 	params = {
 		"api_key": API_KEY,
-		"champion": 16,
+		"champion": 37,
 		"season": 13,
 		"platformId": SERVER_ID,
-		"queue" : SOLO_QUEUE
+		"queue" : int(Queue.SOLO)
 	}
 	
 	req = riot_api.get(MATCH_LIST_URL + account_id, params = params)
@@ -63,6 +68,7 @@ def get_matches_list(account_id):
 	return [match_info['gameId'] for match_info in json.loads(req.text)['matches']]
 
 def get_game_info(game_id):
+	
 	params = {
 		"api_key": API_KEY,
 		"matchId": game_id,
@@ -136,7 +142,7 @@ if __name__ == "__main__":
 
 	riot_api =	OAuth1Session(API_KEY)
 	
-	lol_version = get_latest_version(riot_api)
+	#lol_version = get_latest_version(riot_api)
 	account_id = get_encrypted_account_id()
 	match_list = get_matches_list(account_id)
 	
@@ -154,11 +160,6 @@ if __name__ == "__main__":
 	counted_won_match_list,won_match_value = zip(*collections.Counter(won_match_list).items())
 	counted_lost_match_list,lost_match_value = zip(*collections.Counter(lost_match_list).items())
 
-	#w_list =('カルマ', 'カシオペア', 'フィドルスティックス', 'ゼラス', 'ジンクス', 'ゼド', 'ダリウス', 'スレッシュ', 'ヴェイン', 'レオナ', 'ルシアン', 'スウェイン', 'エズリアル', 'アッシュ', 'ドレイヴン', 'トリスターナ')
-	#w_value = (1, 1, 3, 1, 1, 1, 1, 6, 4, 5, 3, 1, 1, 1, 1, 1)
-	#l_list =('ブリッツクランク', 'エズリアル', 'マルファイト', 'モルガナ', 'ミス・フォーチュン', 'リー・シン', 'ヨリック', 'ヤスオ', 'ルシアン', 'レオナ', 'スレッシュ', 'パイク', 'ガリオ', 'ジン', 'ヴェイン', 'レネクトン', 'ジャックス', 'ルブラン', 'アッシュ', 'シンジド', 'フィドルスティックス')
-	#l_value = (2, 4, 1, 1, 2, 1, 1, 1, 2, 2, 4, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-
 	g_list = list(set(counted_won_match_list + counted_lost_match_list))
 	g_value =[0] * len(g_list)
 	g2_value =[0] * len(g_list)
@@ -169,44 +170,10 @@ if __name__ == "__main__":
 		matched_champ_in_glist = g_list.index(matched_champ)
 		
 		if champ in counted_won_match_list:
-			#print(counted_won_match_list[counted_won_match_list.index(matched_champ)])
-			#print(won_match_value[counted_won_match_list.index(matched_champ)])
 			g_value[matched_champ_in_glist] = won_match_value[counted_won_match_list.index(matched_champ)]
 			
 		if champ in counted_lost_match_list:
 			g2_value[matched_champ_in_glist] = lost_match_value[counted_lost_match_list.index(matched_champ)]
-		
-	#この方法だとどのチャンプに勝ったのかを送れない
-	"""
-	count = 0
-	
-	print(won_match_value)
-	#チャンプ配列の中から
-	for a in g_list :
-		#勝ったマッチアップにいたら
-		if a in counted_won_match_list:
-			#勝った数に
-			g_value.append(won_match_value[count])
-			print(a)
-			print(g_value)
-			print(count)
-			count+=1
-			#g_value.append(int(counted_won_match_list.index(a)))
-
-		else:
-			g_value.append(0)
-
-
-			
-	count = 0
-	for a in g_list :
-		if a in counted_lost_match_list:
-			g2_value.append(lost_match_value[count])
-			count+=1
-		else:
-			g2_value.append(0)	
-	"""	
-	
 	
 	fig, axes = plt.subplots(figsize=(80, 4))
 	axes.bar(g_list, g_value)
