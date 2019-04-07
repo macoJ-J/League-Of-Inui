@@ -9,6 +9,7 @@ import sys
 import collections
 import config_of_inui
 import enum
+from time import sleep
 
 API_KEY = config_of_inui.API_KEY
 ACCOUNT_NAME = config_of_inui.ACCOUNT_NAME
@@ -28,14 +29,22 @@ class Queue(enum.IntEnum):
 	SOLO = 420
 	NORMAL = 430
 	TEAM = 440
+	
+class SupportItem(enum.IntEnum):
+	pass
 
-#リストの先頭が最新バージョン
+	
+#リストの先頭が最新バージョン,現在未使用
 def get_latest_version(riot_api):
 	req = riot_api.get(LATEST_VERSION_URL)
 	return json.loads(req.text)[0]
-#未使用
+
 def get_champion_data_json():
 	req = riot_api.get(CHAMPION_DATA_URL)
+	return json.loads(req.text)
+	
+def get_item_data_json():
+	req = riot_api.get(ITEM_DATA_URL)
 	return json.loads(req.text)
 
 def get_encrypted_account_id():
@@ -52,12 +61,11 @@ def get_encrypted_account_id():
 		print("ERROR:" + str(req.status_code))
 		print(req.headers)
 		sys.exit()
-		
 	
 def get_matches_list(account_id):
 	params = {
 		"api_key": API_KEY,
-		"champion": 37,
+		"champion": 37, #103 ahri #37 sona #267 nami #16 raka
 		"season": 13,
 		"platformId": SERVER_ID,
 		"queue" : int(Queue.SOLO)
@@ -92,7 +100,7 @@ def get_participant_id(game_info,account_id,won_match_list,lost_match_list,champ
 			participant_id = data['participantId']
 			break
 			
-	#idから勝敗、レーン、チームカラー、使用チャンプを取得
+	#プレイヤーidから勝敗、レーン、チームカラー、使用チャンプを取得
 	for data in game_info['participants']:		
 		if data['stats']['participantId'] == participant_id:
 			win = data['stats']['win']	#bool
@@ -102,7 +110,6 @@ def get_participant_id(game_info,account_id,won_match_list,lost_match_list,champ
 			my_champion_name = search_champion_name_from_json(my_champion_id,champion_json)
 			break
 			
-	#BOTLANEだと対面が2体なのでbreakしない
 	for data in game_info['participants']:
 		if data['teamId'] is not team_color:
 			enemy_lane = check_player_lane(data)
@@ -114,7 +121,7 @@ def get_participant_id(game_info,account_id,won_match_list,lost_match_list,champ
 					won_match_list.append(enemy_champion_name)
 				else:
 					lost_match_list.append(enemy_champion_name)
-				
+				#BOTLANEだと対面が2体なのでbreakしない
 				if lane is not "BOTTOM":
 					break
 					
@@ -122,13 +129,24 @@ def check_player_lane(data):
 
 	lane = data['timeline']['lane']
 	role = data['timeline']['role']
+	item_list = [data['stats']['item0'],data['stats']['item1'],data['stats']['item2'],data['stats']['item3'],data['stats']['item4'],data['stats']['item5'],data['stats']['item6']]
+	#support_item_list = [3301,3096,3069,3302,3097,3401,3303,3098,3092]
+	#強化したもののみでフィルタしてみる
+	support_item_list = [3096,3069,3097,3401,3098,3092]
 	SMITE_SPELL_ID = 11
 
 	if data['spell1Id'] == SMITE_SPELL_ID or data['spell2Id'] == SMITE_SPELL_ID:
 		lane = "JUNGLE"
-	
-	elif role == "DUO_SUPPORT":
+		
+	elif role == "DUO_CARRY":
 		lane = "BOTTOM"
+		
+	#綺麗な書き方がわからない	
+	elif [lambda:None for item in item_list if item in support_item_list]:
+		lane = "BOTTOM"	
+	#サポートアイテム、スマイトもってないのにduo_supportならmidで決め打ち
+	elif role == "DUO_SUPPORT":
+		lane = "MIDDLE"
 						
 	return lane
 	
@@ -137,25 +155,39 @@ def search_champion_name_from_json(champion_id,champion_json):
 	for champion_data in champion_json['data'].items():
 		if champion_data[1]["key"] == str(champion_id):
 			return champion_data[1]['name']
+			
+def create_stacked_bar_chart(g_list,won_game_value,lost_game_value):
+	
+	mpl.rcParams['font.family'] = 'Kozuka Mincho Pro'
+	fig, axes = plt.subplots(figsize=(90, 4))
+	axes.set_title( ACCOUNT_NAME + "stats")
+
+	p1 = axes.bar(g_list, won_game_value)
+	p2 =axes.bar(g_list, lost_game_value, bottom=won_game_value)
+	axes.legend((p1[0],p2[0]),("win","lose"))
+	axes.tick_params(labelsize=90/len(g_list) + 1)
+	axes.set_ylabel("Games")
+	#plt.tight_layout()
+	plt.show()
 
 if __name__ == "__main__":	
 
 	riot_api =	OAuth1Session(API_KEY)
 	
-	#lol_version = get_latest_version(riot_api)
 	account_id = get_encrypted_account_id()
-	match_list = get_matches_list(account_id)
-	
+	match_list = get_matches_list(account_id)	
 	won_match_list = []
 	lost_match_list = []
-	
 	champion_json = get_champion_data_json()
+	item_json = get_item_data_json()
 	
-	for gameid in match_list:
+	for index, gameid in enumerate(match_list):
 		game_info = get_game_info(gameid)
-		get_participant_id(game_info,account_id,won_match_list,lost_match_list,champion_json)	
+		get_participant_id(game_info,account_id,won_match_list,lost_match_list,champion_json)
+		
+		if index is 80:
+			sleep(30)
 	
-	mpl.rcParams['font.family'] = 'Kozuka Mincho Pro'
 
 	counted_won_match_list,won_match_value = zip(*collections.Counter(won_match_list).items())
 	counted_lost_match_list,lost_match_value = zip(*collections.Counter(lost_match_list).items())
@@ -175,10 +207,7 @@ if __name__ == "__main__":
 		if champ in counted_lost_match_list:
 			g2_value[matched_champ_in_glist] = lost_match_value[counted_lost_match_list.index(matched_champ)]
 	
-	fig, axes = plt.subplots(figsize=(80, 4))
-	axes.bar(g_list, g_value)
-	axes.bar(g_list, g2_value, bottom=g_value)
-	plt.tick_params(labelsize=3)
-	plt.show()
+	create_stacked_bar_chart(g_list,g_value,g2_value)
+
 		
 
