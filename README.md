@@ -4,9 +4,10 @@
 サモナーネームと調べたいchampを入力すると自分のそのchampの戦績がグラフで表示されます。
 
 ## Demo
-![sample](https://github.com/macoJ-J/League-Of-Inui/blob/images/sample.png)
+![sample](https://github.com/macoJ-J/League-Of-Inui/blob/images/sample_ver02.png)
 
-Blue bar meaning "win",orange bar meaning "lose".
+Blue bar meaning "win",orange bar meaning "lose".  
+If you pick ADC or Support, then analyze both enemy champ in bot lane.
 
 ## Requirement
 matplotlib  
