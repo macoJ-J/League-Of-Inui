@@ -15,9 +15,9 @@ API_KEY = config_of_inui.API_KEY
 ACCOUNT_NAME = config_of_inui.ACCOUNT_NAME
 SERVER_ID = config_of_inui.SERVER_ID
 
-MATCH_LIST_URL ="https://jp1.api.riotgames.com/lol/match/v4/matchlists/by-account/"
-ACCOUNT_ID_URL = "https://jp1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + ACCOUNT_NAME
-GAME_INFO_URL = "https://jp1.api.riotgames.com/lol/match/v4/matches/"
+MATCH_LIST_URL ="https://" + SERVER_ID + ".api.riotgames.com/lol/match/v4/matchlists/by-account/"
+ACCOUNT_ID_URL = "https://" + SERVER_ID + ".api.riotgames.com/lol/summoner/v4/summoners/by-name/" + ACCOUNT_NAME
+GAME_INFO_URL = "https://" + SERVER_ID + ".api.riotgames.com/lol/match/v4/matches/"
 LATEST_VERSION_URL = "https://ddragon.leagueoflegends.com/api/versions.json"
 
 lol_version = json.loads(OAuth1Session(API_KEY).get(LATEST_VERSION_URL).text)[0]
