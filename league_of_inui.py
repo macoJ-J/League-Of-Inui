@@ -62,10 +62,10 @@ def get_encrypted_account_id():
 		print(req.headers)
 		sys.exit()
 	
-def get_matches_list(account_id):
+def get_matches_list(account_id,champ_id):
 	params = {
 		"api_key": API_KEY,
-		"champion": 37, #103 ahri #37 sona #267 nami #16 raka
+		"champion": champ_id,
 		"season": 13,
 		"platformId": SERVER_ID,
 		"queue" : int(Queue.SOLO)
@@ -156,6 +156,15 @@ def search_champion_name_from_json(champion_id,champion_json):
 		if champion_data[1]["key"] == str(champion_id):
 			return champion_data[1]['name']
 			
+def translate_champ_id_from_name(champ_name):
+	for champion_data in champion_json['data'].items():
+		if champion_data[0] == champ_name:
+			return champion_data[1]["key"]
+		else:
+			pass
+	print("チャンピオン名はこれであっていますか？ / is this correct champ name?:" + champ_name)
+	
+			
 def create_stacked_bar_chart(g_list,won_game_value,lost_game_value):
 	
 	mpl.rcParams['font.family'] = 'Kozuka Mincho Pro'
@@ -171,14 +180,22 @@ def create_stacked_bar_chart(g_list,won_game_value,lost_game_value):
 	plt.show()
 
 if __name__ == "__main__":	
-
 	riot_api =	OAuth1Session(API_KEY)
+	champion_json = get_champion_data_json()
+	print("チャンプ名を英語で入力してください。/ Enter your champion name.")
+	print("o:Sona,MonkeyKing,TwistedFate ")
+	print("x:ソナ,sona,wukong")
+	while True:
+		champ_name = input()
+		champ_id = translate_champ_id_from_name(champ_name)
+		if champ_id is not None:
+			break
+		print("もう一度入力してください。/ Retry.")
 	
 	account_id = get_encrypted_account_id()
-	match_list = get_matches_list(account_id)	
+	match_list = get_matches_list(account_id,champ_id)	
 	won_match_list = []
 	lost_match_list = []
-	champion_json = get_champion_data_json()
 	item_json = get_item_data_json()
 	
 	for index, gameid in enumerate(match_list):
