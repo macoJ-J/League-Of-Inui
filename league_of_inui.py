@@ -14,6 +14,7 @@ from time import sleep
 API_KEY = config_of_inui.API_KEY
 ACCOUNT_NAME = config_of_inui.ACCOUNT_NAME
 SERVER_ID = config_of_inui.SERVER_ID
+LOCALE = config_of_inui.LOCALE
 
 MATCH_LIST_URL ="https://" + SERVER_ID + ".api.riotgames.com/lol/match/v4/matchlists/by-account/"
 ACCOUNT_ID_URL = "https://" + SERVER_ID + ".api.riotgames.com/lol/summoner/v4/summoners/by-name/" + ACCOUNT_NAME
@@ -22,7 +23,7 @@ LATEST_VERSION_URL = "https://ddragon.leagueoflegends.com/api/versions.json"
 
 lol_version = json.loads(OAuth1Session(API_KEY).get(LATEST_VERSION_URL).text)[0]
 
-CHAMPION_DATA_URL = "http://ddragon.leagueoflegends.com/cdn/" + lol_version + "/data/ja_JP/champion.json"
+CHAMPION_DATA_URL = "http://ddragon.leagueoflegends.com/cdn/" + lol_version + "/data/" + LOCALE + "/champion.json"
 ITEM_DATA_URL = "http://ddragon.leagueoflegends.com/cdn/" + lol_version + "/data/ja_JP/item.json"
 
 class Queue(enum.IntEnum):	
@@ -162,14 +163,14 @@ def translate_champ_id_from_name(champ_name):
 			return champion_data[1]["key"]
 		else:
 			pass
-	print("チャンピオン名はこれであっていますか？ / is this correct champ name?:" + champ_name)
+	print("チャンピオン名は正しく入力されていますか？ / is this correct champ name?:" + champ_name)
 	
 			
 def create_stacked_bar_chart(g_list,won_game_value,lost_game_value):
 	
 	mpl.rcParams['font.family'] = 'Kozuka Mincho Pro'
 	fig, axes = plt.subplots(figsize=(90, 4))
-	axes.set_title( ACCOUNT_NAME + "stats")
+	axes.set_title( champ_name + " stats")
 
 	p1 = axes.bar(g_list, won_game_value)
 	p2 =axes.bar(g_list, lost_game_value, bottom=won_game_value)
