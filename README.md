@@ -6,7 +6,7 @@
 If you enter the summoner name and the champion name you want to check, the results of your own champ will be displayed in a graph.
 
 ## Demo
-![sample](https://github.com/macoJ-J/League-Of-Inui/blob/images/sample.png)
+![sample](https://github.com/macoJ-J/League-Of-Inui/blob/images/sample_ver2.png)
 
 Blue bar meaning "win",orange bar meaning "lose".  
 If you pick ADC or Support, then analyze both enemy champ in bot lane.
@@ -27,6 +27,7 @@ config_of_inui.py
 API_KEY = "" #https://developer.riotgames.com  
 ACCOUNT_NAME = "" #your account name  
 SERVER_ID = "" # https://developer.riotgames.com/regional-endpoints.html  
+LOCALE = " #input locale, such as ja_JP,en_US  
 ```
 
 run league-of-inui.py
