@@ -16,24 +16,20 @@ ACCOUNT_NAME = config_of_inui.ACCOUNT_NAME
 SERVER_ID = config_of_inui.SERVER_ID
 LOCALE = config_of_inui.LOCALE
 
-MATCH_LIST_URL ="https://" + SERVER_ID + ".api.riotgames.com/lol/match/v4/matchlists/by-account/"
-ACCOUNT_ID_URL = "https://" + SERVER_ID + ".api.riotgames.com/lol/summoner/v4/summoners/by-name/" + ACCOUNT_NAME
-GAME_INFO_URL = "https://" + SERVER_ID + ".api.riotgames.com/lol/match/v4/matches/"
+MATCH_LIST_URL ="https://{}.api.riotgames.com/lol/match/v4/matchlists/by-account/".format(SERVER_ID)
+ACCOUNT_ID_URL = "https://{}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{}".format(SERVER_ID,ACCOUNT_NAME)
+GAME_INFO_URL = "https://{}.api.riotgames.com/lol/match/v4/matches/".format(SERVER_ID)
 LATEST_VERSION_URL = "https://ddragon.leagueoflegends.com/api/versions.json"
 
 lol_version = json.loads(OAuth1Session(API_KEY).get(LATEST_VERSION_URL).text)[0]
 
-CHAMPION_DATA_URL = "http://ddragon.leagueoflegends.com/cdn/" + lol_version + "/data/" + LOCALE + "/champion.json"
-ITEM_DATA_URL = "http://ddragon.leagueoflegends.com/cdn/" + lol_version + "/data/ja_JP/item.json"
+CHAMPION_DATA_URL = "http://ddragon.leagueoflegends.com/cdn/{}/data/{}/champion.json".format(lol_version,LOCALE)
+ITEM_DATA_URL = "http://ddragon.leagueoflegends.com/cdn/{}/data/ja_JP/item.json".format(lol_version)
 
 class Queue(enum.IntEnum):	
 	SOLO = 420
 	NORMAL = 430
 	TEAM = 440
-	
-class SupportItem(enum.IntEnum):
-	pass
-
 	
 #リストの先頭が最新バージョン,現在未使用
 def get_latest_version(riot_api):
@@ -131,7 +127,6 @@ def check_player_lane(data):
 	lane = data['timeline']['lane']
 	role = data['timeline']['role']
 	item_list = [data['stats']['item0'],data['stats']['item1'],data['stats']['item2'],data['stats']['item3'],data['stats']['item4'],data['stats']['item5'],data['stats']['item6']]
-	#support_item_list = [3301,3096,3069,3302,3097,3401,3303,3098,3092]
 	#強化したもののみでフィルタしてみる
 	support_item_list = [3096,3069,3097,3401,3098,3092]
 	SMITE_SPELL_ID = 11
@@ -142,7 +137,6 @@ def check_player_lane(data):
 	elif role == "DUO_CARRY":
 		lane = "BOTTOM"
 		
-	#綺麗な書き方がわからない	
 	elif [lambda:None for item in item_list if item in support_item_list]:
 		lane = "BOTTOM"	
 	#サポートアイテム、スマイトもってないのにduo_supportならmidで決め打ち
@@ -163,7 +157,7 @@ def translate_champ_id_from_name(champ_name):
 			return champion_data[1]["key"]
 		else:
 			pass
-	print("チャンピオン名は正しく入力されていますか？ / is this correct champ name?:" + champ_name)
+	print("チャンピオン名は正しく入力されていますか？ / is this correct champ name?:{}".format(champ_name))
 	
 			
 def create_stacked_bar_chart(g_list,won_game_value,lost_game_value):
@@ -175,16 +169,17 @@ def create_stacked_bar_chart(g_list,won_game_value,lost_game_value):
 	p1 = axes.bar(g_list, won_game_value)
 	p2 =axes.bar(g_list, lost_game_value, bottom=won_game_value)
 	axes.legend((p1[0],p2[0]),("win","lose"))
-	axes.tick_params(labelsize=90/len(g_list) + 1)
+	axes.tick_params(labelsize=80/len(g_list) + 2)
 	axes.set_ylabel("Games")
 	#plt.tight_layout()
 	plt.show()
+	
 
 if __name__ == "__main__":	
 	riot_api =	OAuth1Session(API_KEY)
 	champion_json = get_champion_data_json()
 	print("チャンプ名を英語で入力してください。/ Enter your champion name.")
-	print("o:Sona,MonkeyKing,TwistedFate ")
+	print("o:Sona,MonkeyKing,TwistedFate")
 	print("x:ソナ,sona,wukong")
 	while True:
 		champ_name = input()
